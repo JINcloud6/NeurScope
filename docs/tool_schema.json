@@ -1,0 +1,95 @@
+{
+  "protocol": "proofreading.minimal_tools.v2",
+  "instructions": "Observe the fixed-anchor historical scene using only observe, set_view, rotate_view, step_slice.\nset_view accepts mode=4panel|3d|xy|xz|yz and resets the slice to the task anchor.\nrotate_view requires 3d and accepts axis=x|y|z plus angle_degrees.\nstep_slice requires a single 2D mode and accepts signed integer steps; positive follows the plane normal.\nEvery successful call returns a fresh PNG and matching state. No pan, zoom, editing or historical queries.\nThe host provides the task initially and collects the final structured JSON answer; neither requires a tool.\n",
+  "tools": [
+    {
+      "name": "observe",
+      "description": "Return a fresh PNG of the current view and its exact state. Does not change the camera.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "Empty",
+        "type": "object"
+      }
+    },
+    {
+      "name": "set_view",
+      "description": "Switch among 4panel, 3d, xy, xz, yz and return a fresh PNG. Resets slice offset to zero at the fixed anchor. No zoom or pan.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "description": "Display mode. Switching resets slice center to the fixed task anchor, preserving 3D orientation and physical field of view.",
+            "enum": [
+              "4panel",
+              "3d",
+              "xy",
+              "xz",
+              "yz"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "SetView",
+        "type": "object"
+      }
+    },
+    {
+      "name": "rotate_view",
+      "description": "Only in 3d mode: rotate about a fixed world axis at the fixed task anchor, using a signed right-hand angle in degrees. Return a fresh PNG; no mode auto-switch.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "axis": {
+            "description": "Fixed world axis, using right-hand rule; affects the 3D camera around the current center.",
+            "enum": [
+              "x",
+              "y",
+              "z"
+            ],
+            "title": "Axis",
+            "type": "string"
+          },
+          "angle_degrees": {
+            "description": "Signed incremental angle in degrees. E.g. 30 rotates +30 degrees; -30 reverses it.",
+            "maximum": 180,
+            "minimum": -180,
+            "title": "Angle Degrees",
+            "type": "number"
+          }
+        },
+        "required": [
+          "axis",
+          "angle_degrees"
+        ],
+        "title": "RotateView",
+        "type": "object"
+      }
+    },
+    {
+      "name": "step_slice",
+      "description": "Only in xy/xz/yz mode: advance/reverse by signed voxel slice count along the current plane normal. Keep in-plane center and FOV fixed; return a fresh PNG. Reject ROI overflow.",
+      "inputSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "steps": {
+            "description": "Signed slice count: positive advances along the normal axis, negative reverses. XY uses z, XZ uses y, YZ uses x. Only allowed in a single 2D slice mode.",
+            "maximum": 50,
+            "minimum": -50,
+            "title": "Steps",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "title": "StepSlice",
+        "type": "object"
+      }
+    }
+  ]
+}
